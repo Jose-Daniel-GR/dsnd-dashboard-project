@@ -1,65 +1,58 @@
 # Import the QueryBase class
-#### YOUR CODE HERE
+from employee_events.query_base import QueryBase
 
-# Import dependencies needed for sql execution
-# from the `sql_execution` module
-#### YOUR CODE HERE
-
-# Define a subclass of QueryBase
-# called Employee
-#### YOUR CODE HERE
-
-    # Set the class attribute `name`
-    # to the string "employee"
-    #### YOUR CODE HERE
+# Import the query decorator for sql execution
+from employee_events.sql_execution import query
 
 
-    # Define a method called `names`
-    # that receives no arguments
-    # This method should return a list of tuples
-    # from an sql execution
-    #### YOUR CODE HERE
-        
+# Define Employee as a subclass of QueryBase
+class Employee(QueryBase):
+    """Handles SQL queries specific to individual employees."""
+
+    # Set table name to employee
+    name = "employee"
+
+    def names(self) -> list:
+        """
+        Return a list of tuples with full name
+        and id for all employees.
+        """
         # Query 3
-        # Write an SQL query
-        # that selects two columns 
-        # 1. The employee's full name
-        # 2. The employee's id
-        # This query should return the data
+        # Select full name and employee id
         # for all employees in the database
-        #### YOUR CODE HERE
-    
+        sql = """
+            SELECT first_name || ' ' || last_name AS full_name,
+                   employee_id
+            FROM employee
+            ORDER BY full_name
+        """
+        return self.query(sql)
 
-    # Define a method called `username`
-    # that receives an `id` argument
-    # This method should return a list of tuples
-    # from an sql execution
-    #### YOUR CODE HERE
-        
+    def username(self, id: int) -> list:
+        """
+        Return a list of tuples with the full name
+        of the employee matching the given id.
+        """
         # Query 4
-        # Write an SQL query
-        # that selects an employees full name
-        # Use f-string formatting and a WHERE filter
-        # to only return the full name of the employee
-        # with an id equal to the id argument
-        #### YOUR CODE HERE
+        # Select full name filtered by employee id
+        sql = f"""
+            SELECT first_name || ' ' || last_name AS full_name
+            FROM employee
+            WHERE employee_id = {id}
+        """
+        return self.query(sql)
 
-
-    # Below is method with an SQL query
-    # This SQL query generates the data needed for
-    # the machine learning model.
-    # Without editing the query, alter this method
-    # so when it is called, a pandas dataframe
-    # is returns containing the execution of
-    # the sql query
-    #### YOUR CODE HERE
-    def model_data(self, id):
-
-        return f"""
-                    SELECT SUM(positive_events) positive_events
-                         , SUM(negative_events) negative_events
-                    FROM {self.name}
-                    JOIN employee_events
-                        USING({self.name}_id)
-                    WHERE {self.name}.{self.name}_id = {id}
-                """
+    def model_data(self, id: int):
+        """
+        Return a DataFrame with aggregated positive
+        and negative events for the ML model.
+        """
+        # Execute the SQL query and return a pandas DataFrame
+        return self.pandas_query(f"""
+            SELECT SUM(positive_events) positive_events
+                 , SUM(negative_events) negative_events
+            FROM {self.name}
+            JOIN employee_events
+                USING({self.name}_id)
+            WHERE {self.name}.{self.name}_id = {id}
+        """)

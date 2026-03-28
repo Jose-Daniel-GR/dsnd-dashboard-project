@@ -3,35 +3,41 @@ from pathlib import Path
 from functools import wraps
 import pandas as pd
 
-# Using pathlib, create a `db_path` variable
-# that points to the absolute path for the `employee_events.db` file
-#### YOUR CODE HERE
+#Absolute path to the database
+db_path = Path(__file__).parent / "employee_events.db"
 
-
-# OPTION 1: MIXIN
-# Define a class called `QueryMixin`
+# MIXIN for handling SQLite connections
 class QueryMixin:
-    
-    # Define a method named `pandas_query`
-    # that receives an sql query as a string
-    # and returns the query's result
-    # as a pandas dataframe
-    #### YOUR CODE HERE
+    """
+    Mixin que maneja conexion SQLite.
+    Abre conexion, ejecuta SQL, cierra y retorna datos.
+    """
 
-    # Define a method named `query`
-    # that receives an sql_query as a string
-    # and returns the query's result as
-    # a list of tuples. (You will need
-    # to use an sqlite3 cursor)
-    #### YOUR CODE HERE
-    
+    def pandas_query(self, sql_query: str) -> pd.DataFrame:
+        """Ejecuta SQL y retorna un DataFrame de pandas."""
+        connection = connect(db_path)
+        try:
+            result = pd.read_sql_query(sql_query, connection)
+        finally:
+            connection.close()
+        return result
 
- 
- # Leave this code unchanged
+    def query(self, sql_query: str) -> list:
+        """Ejecuta SQL y retorna lista de tuplas."""
+        connection = connect(db_path)
+        try:
+            cursor = connection.cursor()
+            result = cursor.execute(sql_query).fetchall()
+        finally:
+            connection.close()
+        return result
+
+
+# Alternative decorator
 def query(func):
     """
-    Decorator that runs a standard sql execution
-    and returns a list of tuples
+    Decorator que ejecuta SQL y retorna
+    lista de tuplas.
     """
 
     @wraps(func)
@@ -42,5 +48,5 @@ def query(func):
         result = cursor.execute(query_string).fetchall()
         connection.close()
         return result
-    
+
     return run_query
